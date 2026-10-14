@@ -27,7 +27,7 @@
       max-width: 900px;
       padding: 40px 24px;
       text-align: center;
-      background: white;
+      background: #ffffff;
       border-radius: 16px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
     }
@@ -37,27 +37,12 @@
       font-size: clamp(1.8rem, 5vw, 2.5rem);
     }
 
-    h2 {
-      font-size: 1.3rem;
-    }
-
-    p {
-      color: #526074;
-    }
-
-    .placeholder {
-      padding: 40px 16px;
-      margin-top: 24px;
-      background: #f5f7fa;
-      border-radius: 12px;
-    }
-
     .video-container {
       aspect-ratio: 16 / 9;
       margin-top: 24px;
       overflow: hidden;
       border-radius: 12px;
-      background: #000;
+      background: #000000;
     }
 
     iframe {
@@ -70,10 +55,6 @@
     a {
       color: #2458b8;
     }
-
-    [hidden] {
-      display: none !important;
-    }
   </style>
 </head>
 
@@ -81,55 +62,24 @@
   <main>
     <h1>Research Demonstration</h1>
 
-    <section id="placeholder" class="placeholder">
-      <h2>Video coming soon</h2>
-      <p>The demonstration video will be available here shortly.</p>
-    </section>
+    <div class="video-container">
+      <iframe
+        src="https://www.youtube.com/embed/oENpnQvfFkQ"
+        title="Research demonstration video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen>
+      </iframe>
+    </div>
 
-    <section id="video-section" hidden>
-      <div class="video-container">
-        <iframe
-          id="youtube-player"
-          title="Research demonstration video"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen>
-        </iframe>
-      </div>
-
-      <p>
-        <a id="youtube-link" target="_blank" rel="noopener noreferrer">
-          Watch on YouTube
-        </a>
-      </p>
-    </section>
+    <p>
+      <a
+        href="https://youtu.be/oENpnQvfFkQ"
+        target="_blank"
+        rel="noopener noreferrer">
+        Watch on YouTube
+      </a>
+    </p>
   </main>
-
-  <script>
-    /*
-      WHEN YOUR VIDEO IS READY:
-      Replace the empty quotes below with your YouTube video ID.
-
-      Example URL: https://www.youtube.com/watch?v=AbCd1234xyz
-      Example setting:
-      const YOUTUBE_VIDEO_ID = "AbCd1234xyz";
-
-      Leave it empty to show "Video coming soon".
-    */
-    const YOUTUBE_VIDEO_ID = "";
-
-    const videoId = YOUTUBE_VIDEO_ID.trim();
-
-    if (/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
-      document.getElementById("youtube-player").src =
-        `https://www.youtube.com/embed/${videoId}`;
-
-      document.getElementById("youtube-link").href =
-        `https://www.youtube.com/watch?v=${videoId}`;
-
-      document.getElementById("placeholder").hidden = true;
-      document.getElementById("video-section").hidden = false;
-    }
-  </script>
 </body>
 </html>
