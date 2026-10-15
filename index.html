@@ -1,85 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Research Demonstration</title>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="description" content="One challenging robot navigation episode compared across Nominal-Flow, Q-Guided-Flow, and Cost-Flow, highlighting Cost-Flow recovery when the other two methods fail." />
+  <title>Robot Navigation | Cost-Flow Recovery Comparison</title>
   <style>
-    * {
-      box-sizing: border-box;
+    :root {
+      color-scheme: dark;
+      --bg: #0b1220;
+      --panel: #121d30;
+      --panel2: #17243a;
+      --ink: #eff5ff;
+      --muted: #9bacbf;
+      --line: rgba(179, 199, 228, .14);
+      --accent: #63d8c8;
+      --accent2: #78a9ff;
+      --radius: 22px;
     }
-
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      font-family: Arial, sans-serif;
+      margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.6;
-      background: #f5f7fa;
-      color: #172033;
     }
-
-    main {
-      width: 100%;
-      max-width: 900px;
-      padding: 40px 24px;
-      text-align: center;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none; z-index: -1;
+      background: radial-gradient(ellipse at 80% 5%, rgba(65,121,197,.18), transparent 42%),
+                  radial-gradient(ellipse at 5% 40%, rgba(32,173,157,.09), transparent 42%);
     }
-
-    h1 {
-      margin-top: 0;
-      font-size: clamp(1.8rem, 5vw, 2.5rem);
+    a { color: inherit; }
+    a:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+    .wrap { width: min(1120px, calc(100% - 40px)); margin-inline: auto; }
+    .topbar { border-bottom: 1px solid var(--line); }
+    .topbar-inner { display: flex; justify-content: space-between; align-items: center; gap: 14px; min-height: 74px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; font-size: .9rem; font-weight: 750; letter-spacing: .02em; text-decoration: none; }
+    .brand-mark { display: inline-grid; place-items: center; width: 33px; height: 33px; border: 1px solid rgba(99,216,200,.4); border-radius: 10px; background: rgba(99,216,200,.1); color: var(--accent); font-size: 1.1rem; }
+    .navlink { color: var(--muted); font-size: .88rem; font-weight: 600; text-decoration: none; }
+    .navlink:hover { color: var(--ink); }
+    main { padding-top: clamp(48px, 8vw, 100px); padding-bottom: 78px; }
+    .eyebrow { color: var(--accent); font-size: .75rem; font-weight: 800; letter-spacing: .17em; text-transform: uppercase; }
+    h1 { margin: 15px 0 18px; max-width: 900px; font-size: clamp(2.1rem, 5.4vw, 4.75rem); letter-spacing: -.055em; line-height: 1.09; }
+    .gradient { background: linear-gradient(100deg, var(--accent), #a2c4ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .intro { max-width: 720px; margin: 0 0 26px; color: var(--muted); font-size: clamp(1rem, 1.6vw, 1.14rem); }
+    .chips { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 32px; }
+    .chip { border: 1px solid var(--line); background: rgba(255,255,255,.035); padding: 7px 13px; border-radius: 99px; font-size: .79rem; color: #c5d2e3; }
+    .video-shell { padding: 10px; background: linear-gradient(145deg, rgba(124,165,226,.22), rgba(99,216,200,.07)); border: 1px solid rgba(160,188,229,.28); border-radius: var(--radius); box-shadow: 0 22px 75px rgba(0,0,0,.3); }
+    .video { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #000; border-radius: 14px; }
+    .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .below-video { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin: 17px 2px 0; }
+    .below-video p { margin: 0; color: var(--muted); font-size: .88rem; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 43px; padding: 10px 17px; border-radius: 10px; background: var(--accent); color: #092023; text-decoration: none; font-weight: 750; font-size: .89rem; transition: transform .2s, background .2s; }
+    .button:hover { background: #8ce9dc; transform: translateY(-2px); }
+    .section-head { margin: 78px 0 20px; }
+    h2 { margin: 0 0 8px; font-size: clamp(1.45rem, 3vw, 2.1rem); letter-spacing: -.035em; line-height: 1.2; }
+    .section-head p { margin: 0; color: var(--muted); }
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+    .card { padding: 25px; background: linear-gradient(160deg, var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 17px; }
+    .card-index { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; background: rgba(99,216,200,.12); color: var(--accent); font-weight: 800; font-size: .78rem; }
+    h3 { margin: 19px 0 9px; font-size: 1.12rem; letter-spacing: -.015em; }
+    .card p { margin: 0; color: var(--muted); font-size: .91rem; }
+    .card--proposed { border-color: rgba(99,216,200,.46); background: linear-gradient(155deg, #17343c, #121d30 70%); }
+    .method-tag { display: inline-block; margin-top: 15px; padding: 4px 9px; border: 1px solid rgba(99,216,200,.32); border-radius: 999px; color: var(--accent); font-size: .73rem; font-weight: 750; }
+    .pipeline { margin-top: 24px; padding: 27px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.025); }
+    .pipeline h3 { margin: 0 0 8px; font-size: 1.22rem; }
+    .pipeline-intro { color: var(--muted); margin: 0 0 23px; font-size: .93rem; }
+    .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .step { border: 1px solid var(--line); background: rgba(14,25,43,.7); padding: 18px; border-radius: 13px; }
+    .step small { display:block; color: var(--accent); font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .step h4 { margin: 7px 0; font-size: 1rem; }
+    .step p { margin: 0; color: var(--muted); font-size: .85rem; }
+    .note { margin-top: 22px; padding: 18px 21px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.025); color: var(--muted); font-size: .9rem; }
+    .note strong { color: var(--ink); }
+    footer { border-top: 1px solid var(--line); padding: 24px 0 32px; color: var(--muted); font-size: .84rem; }
+    .footer-inner { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    footer a { text-decoration: none; color: #c7d7ee; }
+    footer a:hover { text-decoration: underline; }
+    @media (max-width: 700px) {
+      .wrap { width: min(100% - 28px, 1120px); }
+      .topbar-inner { min-height: 64px; }
+      main { padding-top: 52px; padding-bottom: 54px; }
+      .chips { margin-bottom: 24px; }
+      .video-shell { padding: 5px; border-radius: 15px; }
+      .video { border-radius: 10px; }
+      .section-head { margin-top: 54px; }
+      .cards, .steps { grid-template-columns: 1fr; gap: 12px; }
+      .pipeline { padding: 20px; }
+      .card { padding: 21px; }
+      .below-video .button { width: 100%; }
     }
-
-    .video-container {
-      aspect-ratio: 16 / 9;
-      margin-top: 24px;
-      overflow: hidden;
-      border-radius: 12px;
-      background: #000000;
-    }
-
-    iframe {
-      display: block;
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
-
-    a {
-      color: #2458b8;
-    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .button { transition: none; } }
   </style>
 </head>
-
 <body>
-  <main>
-    <h1>Research Demonstration</h1>
-
-    <div class="video-container">
-      <iframe
-        src="https://www.youtube.com/embed/oENpnQvfFkQ"
-        title="Research demonstration video"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        referrerpolicy="strict-origin-when-cross-origin"
-        allowfullscreen>
-      </iframe>
-    </div>
-
-    <p>
-      <a
-        href="https://www.youtube.com/embed/oENpnQvfFkQ"
-        target="_blank"
-        rel="noopener noreferrer">
-        Watch on YouTube
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="#top" aria-label="Research demonstration home">
+        <span class="brand-mark" aria-hidden="true">⌁</span>
+        <span>ROBOTICS <span style="color:var(--muted);font-weight:500">/ RESEARCH</span></span>
       </a>
-    </p>
+      <a class="navlink" href="#methods">Explore methods ↓</a>
+    </div>
+  </header>
+
+  <main id="top" class="wrap">
+    <h1>Robot Navigation<br /><span class="gradient">Recovery Under Failure.</span></h1>
+    <p class="intro">One challenging navigation episode, three approaches. See how Cost-Flow recovers in the scenario where Nominal-Flow and Q-Guided-Flow fail, with synchronized simulation views and live trajectory plots.</p>
+
+    <section aria-label="Research comparison video">
+      <div class="video-shell">
+        <div class="video">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/n_WY2IMLC_c"
+            title="Robot Navigation Comparison: Nominal-Flow vs Q-Guided-Flow vs Cost-Flow"
+            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen></iframe>
+        </div>
+      </div>
+      <div class="below-video">
+        <p>For the best view of all 12 panels, watch in full screen at the highest available quality.</p>
+        <a class="button" href="https://youtu.be/n_WY2IMLC_c" target="_blank" rel="noopener noreferrer">Watch on YouTube ↗</a>
+      </div>
+    </section>
+
+    <section id="methods" aria-labelledby="methods-title">
+      <div class="section-head">
+        <h2 id="methods-title">Three navigation approaches</h2>
+        <p>All three methods are evaluated on the same episode, each shown through three simulation views and a live trajectory plot.</p>
+      </div>
+      <div class="cards">
+        <article class="card">
+          <span class="card-index">01</span>
+          <h3>Nominal-Flow</h3>
+          <p>The baseline flow-based navigation method, providing a reference for comparing the guided approaches on the same episode.</p>
+        </article>
+        <article class="card">
+          <span class="card-index">02</span>
+          <h3>Q-Guided-Flow</h3>
+          <p>An RL-critic-guided flow navigation method that uses a learned critic to guide the generated actions.</p>
+        </article>
+        <article class="card card--proposed">
+          <span class="card-index">03</span>
+          <span class="method-tag">Proposed methodology</span>
+          <h3>Cost-Flow</h3>
+          <p>Our approach combines generative flow matching, predictive robot dynamics, and mathematical cost objectives. In this demonstrated episode, Cost-Flow recovers where the other two methods fail.</p>
+        </article>
+      </div>
+      <div class="pipeline" aria-labelledby="pipeline-title">
+        <h3 id="pipeline-title">How Cost-Flow works</h3>
+        <p class="pipeline-intro">The method connects generated robot actions with predicted future motion and a mathematical cost function.</p>
+        <div class="steps">
+          <div class="step">
+            <small>01 · Generative</small>
+            <h4>Flow matching</h4>
+            <p>Generates a candidate trajectory of 32 future robot actions.</p>
+          </div>
+          <div class="step">
+            <small>02 · Predictive</small>
+            <h4>Robot dynamics model</h4>
+            <p>Uses the current robot state and generated action trajectory to predict future states.</p>
+          </div>
+          <div class="step">
+            <small>03 · Mathematical</small>
+            <h4>Cost objectives</h4>
+            <p>Evaluates the predicted future trajectory using a mathematical cost function.</p>
+          </div>
+        </div>
+      </div>
+      <div class="note"><strong>Viewing note:</strong> Some episodes terminate before the end of the comparison. Their final frames are held so all panels remain visible for the full demonstration.</div>
+    </section>
   </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>Robot Navigation &middot; Research Demonstration</span>
+      <a href="https://youtu.be/n_WY2IMLC_c" target="_blank" rel="noopener noreferrer">YouTube ↗</a>
+    </div>
+  </footer>
 </body>
 </html>
